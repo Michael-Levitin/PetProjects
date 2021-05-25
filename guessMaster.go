@@ -55,10 +55,11 @@ func guessMaster() {
 			fmt.Println("- Please enter 4 digits")
 			continue
 		} else if guess == sequence {
-			fmt.Printf("Congratulations, You've Won in %d moves", i)
+			fmt.Printf("Congratulations, You've Won in %d moves\n", i)
 			break
 		} else {
-			checkGuess(guess, sequence)
+			bull, cow := checkGuess(guess, sequence)
+			printGuessResponce(bull, cow)
 		}
 	}
 	startGame()
@@ -79,7 +80,7 @@ func randomDigits() [4]int {
 	return array
 }
 
-func checkGuess(guess [4]int, sequence [4]int) {
+func checkGuess(guess [4]int, sequence [4]int) (int, int) {
 	var bull int
 	var cow int
 	setGuess := make(map[int]bool)
@@ -87,11 +88,12 @@ func checkGuess(guess [4]int, sequence [4]int) {
 
 	for i := 0; i < 4; i++ { // check unique digits
 		setGuess[guess[i]] = true
-
 	}
 	if len(setGuess) != 4 {
 		fmt.Println("Guess must contain unique digits")
-		return
+		bull = -1
+		cow = -1
+		return bull, cow
 	}
 
 	for i := 0; i < 4; i++ { // populate sequence set
@@ -104,6 +106,13 @@ func checkGuess(guess [4]int, sequence [4]int) {
 		} else if exists := setSequence[guess[i]]; exists {
 			cow++
 		}
+	}
+	return bull, cow
+}
+
+func printGuessResponce(bull int, cow int) {
+	if bull == -1 {
+		return
 	}
 
 	fmt.Print(bull, " bull") // Formatting answer
@@ -118,8 +127,6 @@ func checkGuess(guess [4]int, sequence [4]int) {
 	} else {
 		fmt.Println("")
 	}
-
-	return
 }
 
 func getGuess() [4]int {
