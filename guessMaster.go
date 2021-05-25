@@ -14,7 +14,7 @@ func main() {
 	fmt.Println("A 'bull' means that you guessed a digit at the right place")
 	fmt.Println("A 'cow' means - there's a correct digit at a wrong place")
 	fmt.Println("(All the digits in the sequence are different - example: 0389)")
-	fmt.Println("(So shall be in you guess)")
+	fmt.Println("(That's also apply to your guess)")
 	startGame()
 }
 
