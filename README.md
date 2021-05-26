@@ -1,3 +1,3 @@
 # PetProjects Golang
 Games:
-guessMaster - works for user guesses - don't press P yet :)
+guessMaster.go (guess 4 digits or let PC guess yours) - everything works

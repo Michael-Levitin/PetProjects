@@ -20,7 +20,7 @@ func main() {
 
 func startGame() {
 	var letter string
-	fmt.Println("Wanna play - Y/N? or should I guess your sequence - P")
+	fmt.Println("\nWanna play - Y/N? or should I guess your sequence - P")
 
 	fmt.Scan(&letter)
 	switch letter {
@@ -53,7 +53,7 @@ func guessMasterPC() {
 			break
 		}
 		if len(s) == 0 {
-			fmt.Println("I surrender, you probably made a mistake")
+			fmt.Println("I surrender, you've probably made a mistake")
 			break
 		}
 
@@ -88,13 +88,10 @@ func guessMaster() {
 
 	fmt.Println("Enter you guess in \"0389\" format or S to surrender") //
 	for i := 1; ; i++ {
-		//scanned, err := fmt.Scanf("%d %d %d %d", &guess[0], &guess[1], &guess[2], &guess[3])
-		//scanned, err := fmt.Scan(&guess[0], &guess[1], &guess[2], &guess[3])
 		guess = getGuess()
-		// https://stackoverflow.com/questions/56103775/how-to-print-formatted-string-to-the-same-line-in-stdout-with-go
 		if guess == surrender {
 			fmt.Println("Sorry to hear that, better luck next time")
-			fmt.Println("The answer is:", sequence, "\n")
+			fmt.Println("The answer is:", sequence)
 			break
 		} else if guess == mistake {
 			fmt.Println("- Please enter 4 digits")
@@ -163,7 +160,7 @@ func eliminateAnswers(guess [4]int, answers *[][4]int, bullsAnswer int, cowsAnsw
 			i++ // advance only if not eliminating
 		}
 	} // if checkGuess doesn't give same bulls/cows - delete this answer
-	fmt.Println(len(*answers))
+	//fmt.Println(len(*answers))
 }
 
 func checkGuess(guess [4]int, sequence [4]int) (int, int) {
