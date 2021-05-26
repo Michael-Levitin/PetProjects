@@ -52,6 +52,11 @@ func guessMasterPC() {
 			fmt.Println("Your number is ", s[0])
 			break
 		}
+		if len(s) == 0 {
+			fmt.Println("I surrender, you probably made a mistake")
+			break
+		}
+
 		rand.Seed(time.Now().UnixNano()) // for truly? random
 		num := rand.Intn(len(s))
 		currentGuess := s[num]
@@ -61,6 +66,7 @@ func guessMasterPC() {
 			if _, err := fmt.Scan(&bulls, &cows); err != nil {
 				fmt.Println("I didn't understood that, can you rephrase?")
 			} else {
+				eliminateAnswers(currentGuess, &s, bulls, cows)
 				break
 			}
 
@@ -69,9 +75,7 @@ func guessMasterPC() {
 				break
 			}
 		}
-
 	}
-
 	startGame()
 }
 
@@ -139,7 +143,7 @@ func makeSliceOfAnswers() [][4]int {
 						continue
 					} else {
 						s[index] = [4]int{i, j, k, l}
-						fmt.Println(s[index])
+						//fmt.Println(s[index])
 						index++
 					}
 				}
@@ -147,6 +151,19 @@ func makeSliceOfAnswers() [][4]int {
 		}
 	}
 	return s
+}
+
+func eliminateAnswers(guess [4]int, answers *[][4]int, bullsAnswer int, cowsAnswer int) {
+	for i := 0; i < len(*answers); {
+		bullsCompare, cowsCompare := checkGuess((*answers)[i], guess)
+		if bullsCompare != bullsAnswer ||
+			cowsCompare != cowsAnswer {
+			*answers = append((*answers)[:i], (*answers)[i+1:]...)
+		} else {
+			i++ // advance only if not eliminating
+		}
+	} // if checkGuess doesn't give same bulls/cows - delete this answer
+	fmt.Println(len(*answers))
 }
 
 func checkGuess(guess [4]int, sequence [4]int) (int, int) {
