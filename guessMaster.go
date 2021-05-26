@@ -20,7 +20,7 @@ func main() {
 
 func startGame() {
 	var letter string
-	fmt.Println("Wanna play - Y/N?")
+	fmt.Println("Wanna play - Y/N? or should I guess your sequence - P")
 
 	fmt.Scan(&letter)
 	switch letter {
@@ -28,10 +28,51 @@ func startGame() {
 		fallthrough
 	case "Y":
 		guessMaster()
+	case "p":
+		fallthrough
+	case "P":
+		guessMasterPC()
 	//case "n": fallthrough
 	default:
 		fmt.Println("Goodbye :)")
 	}
+}
+
+func guessMasterPC() {
+	//var s [][4]int
+	var bulls int
+	var cows int
+
+	s := makeSliceOfAnswers()
+
+	fmt.Println("Ready to guess your sequence. ")
+	fmt.Println("Please write you response as 2 digits (bull/s cow/s) - '2 0' ")
+	for {
+		if len(s) == 1 {
+			fmt.Println("Your number is ", s[0])
+			break
+		}
+		rand.Seed(time.Now().UnixNano()) // for truly? random
+		num := rand.Intn(len(s))
+		currentGuess := s[num]
+		fmt.Println("I'm guessing", currentGuess)
+
+		for j := 0; ; j++ {
+			if _, err := fmt.Scan(&bulls, &cows); err != nil {
+				fmt.Println("I didn't understood that, can you rephrase?")
+			} else {
+				break
+			}
+
+			if j > 2 {
+				fmt.Println("Lets try other number")
+				break
+			}
+		}
+
+	}
+
+	startGame()
 }
 
 func guessMaster() {
@@ -59,7 +100,7 @@ func guessMaster() {
 			break
 		} else {
 			bull, cow := checkGuess(guess, sequence)
-			printGuessResponce(bull, cow)
+			printGuessResponse(bull, cow)
 		}
 	}
 	startGame()
@@ -78,6 +119,34 @@ func randomDigits() [4]int {
 		}
 	}
 	return array
+}
+
+func makeSliceOfAnswers() [][4]int {
+	var s [][4]int
+	index := 0
+	s = make([][4]int, 5040)
+	for i := 0; i <= 9; i++ {
+		for j := 0; j <= 9; j++ {
+			if i == j {
+				continue
+			}
+			for k := 0; k <= 9; k++ {
+				if i == k || j == k {
+					continue
+				}
+				for l := 0; l <= 9; l++ {
+					if i == l || j == l || k == l {
+						continue
+					} else {
+						s[index] = [4]int{i, j, k, l}
+						fmt.Println(s[index])
+						index++
+					}
+				}
+			}
+		}
+	}
+	return s
 }
 
 func checkGuess(guess [4]int, sequence [4]int) (int, int) {
@@ -110,7 +179,7 @@ func checkGuess(guess [4]int, sequence [4]int) (int, int) {
 	return bull, cow
 }
 
-func printGuessResponce(bull int, cow int) {
+func printGuessResponse(bull int, cow int) {
 	if bull == -1 {
 		return
 	}
@@ -137,9 +206,6 @@ func getGuess() [4]int {
 	var split []string
 
 	fmt.Scanln(&line)
-
-	//in := bufio.NewReader(os.Stdin)
-	//line,_ := in.ReadString('\n')
 	strings.Trim(line, "\n")
 
 	if line == "S" || line == "s" { //len(line) == 1 &&(
