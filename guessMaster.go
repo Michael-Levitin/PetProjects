@@ -10,7 +10,7 @@ import (
 
 func main() {
 	fmt.Println("GuessMaster is a game, where you guess 4-digit sequence ")
-	fmt.Println("An answer to you guess will be given in a form of 'X bull/s, Y cow/s' ")
+	fmt.Println("An answer to your guess will be given in a form of 'X bull/s, Y cow/s' ")
 	fmt.Println("A 'bull' means that you guessed a digit at the right place")
 	fmt.Println("A 'cow' means - there's a correct digit at a wrong place")
 	fmt.Println("(All the digits in the sequence are different - example: 0389)")
