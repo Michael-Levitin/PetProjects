@@ -8,6 +8,12 @@ import (
 	"time"
 )
 
+type GuessAndResponse struct {
+	Guess [4]int
+	Bull  int
+	Cow   int
+}
+
 func main() {
 	fmt.Println("GuessMaster is a game, where you guess 4-digit sequence ")
 	fmt.Println("An answer to your guess will be given in a form of 'X bull/s, Y cow/s' ")
@@ -38,12 +44,56 @@ func startGame() {
 	}
 }
 
+func requestAnswersChecked(structAnswers []GuessAndResponse) {
+	surrender := [4]int{0, 0, 0, 0}
+	mistake := [4]int{1, 1, 1, 1}
+	var letter string
+	fmt.Println("I surrender, you've probably made a mistake")
+	fmt.Println("Would you like to check it? Y/N ")
+
+	fmt.Scan(&letter)
+	switch letter {
+	case "y":
+		fallthrough
+	case "Y":
+		fmt.Println("Insert correct answer")
+		answer := getGuess()
+		if answer != mistake && answer != surrender {
+			answersCheck(structAnswers, answer)
+		}
+		return
+	default:
+		return
+	}
+}
+
+func answersCheck(structAnswers []GuessAndResponse, answer [4]int) {
+	fmt.Println(structAnswers)
+
+	for index := range structAnswers {
+		bull, cow := checkGuess(structAnswers[index].Guess, answer)
+		if structAnswers[index].Bull != bull ||
+			structAnswers[index].Cow != cow {
+			fmt.Print("For guess ", structAnswers[index].Guess,
+				", you responded - ")
+			printGuessResponse(structAnswers[index].Bull,
+				structAnswers[index].Cow)
+			fmt.Print("                 Correct response is ")
+			printGuessResponse(bull, cow)
+		}
+	}
+	return
+}
+
 func guessMasterPC() {
-	//var s [][4]int
+
 	var bulls int
 	var cows int
 
 	s := makeSliceOfAnswers()
+
+	var answerStorage []GuessAndResponse
+	var answerSingle GuessAndResponse
 
 	fmt.Println("Ready to guess your sequence. ")
 	fmt.Println("Please write you response as 2 digits (bull/s cow/s) - '2 0' ")
@@ -53,7 +103,7 @@ func guessMasterPC() {
 			break
 		}
 		if len(s) == 0 {
-			fmt.Println("I surrender, you've probably made a mistake")
+			requestAnswersChecked(answerStorage)
 			break
 		}
 
@@ -67,6 +117,11 @@ func guessMasterPC() {
 				fmt.Println("I didn't understood that, can you rephrase?")
 			} else {
 				eliminateAnswers(currentGuess, &s, bulls, cows)
+
+				answerSingle.Guess = currentGuess
+				answerSingle.Bull = bulls
+				answerSingle.Cow = cows
+				answerStorage = append(answerStorage, answerSingle)
 				break
 			}
 
@@ -111,9 +166,9 @@ func randomDigits() [4]int {
 	set := make(map[int]bool)
 	var array [4]int
 	for i := 0; i < 4; {
-		rand.Seed(time.Now().UnixNano()) // for truly? random
-		num := rand.Intn(10)             //10 not included
-		if exists := set[num]; !exists { // digits must be unique
+		rand.Seed(time.Now().UnixNano() + rand.Int63()) // for truly? random
+		num := rand.Intn(10)                            //10 not included
+		if exists := set[num]; !exists {                // digits must be unique
 			set[num] = true
 			array[i] = num
 			i++
