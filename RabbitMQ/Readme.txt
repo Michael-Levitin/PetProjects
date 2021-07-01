@@ -1,0 +1,1 @@
+Basically just tutorials from https://www.rabbitmq.com/getstarted.html (for now)
