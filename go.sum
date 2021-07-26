@@ -1,2 +1,4 @@
+github.com/mitchellh/mapstructure v1.4.1 h1:CpVNEelQCZBooIPDn+AR3NpivK/TIKU8bDxdASFVQag=
+github.com/mitchellh/mapstructure v1.4.1/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/rabbitmq/amqp091-go v0.0.0-20210701133455-c85c11646eed h1:c4ITQ2kLY0QFbHPbDJ1PimMc7e6Z5OC68hKRyv1zxXE=
 github.com/rabbitmq/amqp091-go v0.0.0-20210701133455-c85c11646eed/go.mod h1:ogQDLSOACsLPsIq0NpbtiifNZi2YOz0VTJ0kHRghqbM=
