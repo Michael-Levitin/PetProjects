@@ -11,51 +11,53 @@ type job func() // тип функция
 
 func main() {
 	var sleep time.Duration
-
 	ch := make(chan job)             // создаем канал функций
 	wait := make(chan time.Duration) // и канал времени
 	done := make(chan bool)
 
-	sliceJobs := make([]job, 2)
+	sliceJobs := make([]job, 3)
+
+	// Creating in for loop doesnt work
+	//greetings:= []string{"Hello", "World", "And", "Welcome", "To", "Golang"}
+	//fmt.Println(greetings)
+	//sliceJobs := make([]job, len(greetings))
+	//for i:=0; i<len(greetings)-1;i++{
+	//	sliceJobs[i] = func() { // Создаем функции
+	//		current := time.Now()
+	//		time.Sleep(time.Duration(rand.Intn(2e2)) * time.Millisecond)
+	//		fmt.Println(greetings[i], time.Since(current))
+	//	}
+	//}
+	//for i:=0; i<len(greetings)-1;i++{
+	//	sliceJobs[i]()
+	//}
+
 	sliceJobs[0] = func() { // одну переменный типа job
 		current := time.Now()
-		time.Sleep(time.Duration(rand.Intn(2e2)) * time.Millisecond)
+		time.Sleep(time.Duration(rand.Intn(1e2)) * time.Millisecond)
 		fmt.Println("Hello", time.Since(current))
-		//fmt.Println("Hello")
 	}
-	sliceJobs[1] = func() { // и вторую
+	sliceJobs[1] = func() { // вторую
 		current := time.Now()
 		time.Sleep(time.Duration(rand.Intn(2e2)) * time.Millisecond)
-		fmt.Println("world", time.Since(current))
-		//fmt.Println("world")
+		fmt.Println("Golang", time.Since(current))
+	}
+	sliceJobs[2] = func() { // и еще одну
+		current := time.Now()
+		time.Sleep(time.Duration(rand.Intn(3e2)) * time.Millisecond)
+		fmt.Println("World", time.Since(current))
 	}
 
-	go pingpong(ch, wait, done) //запускаем функцию которая принимает 2 канала
+	pingpong(ch, wait, done) //запускаем функцию которая принимает 2 канала
 
+	rand.Seed(time.Now().UnixNano() + rand.Int63())
 	for i := 0; i < 10; i++ {
 		select {
 		case sleep = <-wait:
 			fmt.Println("Sleeping for ", sleep)
 			time.Sleep(sleep)
-		case ch <- sliceJobs[rand.Intn(2)]:
+		case ch <- sliceJobs[rand.Intn(3)]:
 		}
-
-		//if sleep = <-wait; sleep != 0{
-		//	fmt.Println("Sleeping for ", sleep)
-		//	time.Sleep(sleep)
-		//	sleep = 0
-		//} else {
-		//	ch <- sliceJobs[rand.Intn(2)]
-		//}
-
-		//case
-		//	ch <- sliceJobs[rand.Intn(2)]
-		//}
-		//fmt.Println("Iteration", i)
-		//duration := time.Duration(rand.Intn(1e3)) * time.Millisecond
-		//fmt.Println("Sleeping for", duration )
-		//time.Sleep(duration)
-
 	}
 	done <- true
 }
