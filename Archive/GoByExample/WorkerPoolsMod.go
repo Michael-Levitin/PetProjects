@@ -3,17 +3,19 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 )
 
 type job func() // тип функция
 
-func worker(id int, jobs <-chan job, results chan<- struct{}) {
+func worker(id int, jobs <-chan job, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for fn := range jobs {
-		fmt.Println("worker", id, "started  job")
+		//fmt.Println("worker", id, "started  job")
 		fn()
-		fmt.Println("worker", id, "finished job")
-		results <- struct{}{} // sending empty struct to signal "finished"
+		//fmt.Println("worker", id, "finished job")
+		//results <- struct{}{} // sending empty struct to signal "finished"
 	}
 }
 
@@ -27,9 +29,10 @@ func main() {
 //func ratelimiter(ch chan job, totalWorker int, ratePerM int) {
 
 func dosome() {
-	const numJobs = 5
-	jobs := make(chan job, numJobs)
-	results := make(chan struct{}, numJobs)
+	var wg sync.WaitGroup
+	const numJobs = 6
+	jobs := make(chan job)
+	//results := make(chan struct{}, numJobs)
 
 	rand.Seed(time.Now().UnixNano() + rand.Int63())
 	sliceJobs := make([]job, 3) // Слайс функций для нагрузки
@@ -51,7 +54,8 @@ func dosome() {
 	}
 
 	for w := 1; w <= 5; w++ {
-		go worker(w, jobs, results)
+		wg.Add(1)
+		go worker(w, jobs, &wg)
 	}
 
 	for i := 0; i < 10; i++ {
@@ -59,8 +63,6 @@ func dosome() {
 	}
 
 	close(jobs)
+	wg.Wait()
 
-	for i := 0; i < 10; i++ {
-		<-results
-	}
 }
