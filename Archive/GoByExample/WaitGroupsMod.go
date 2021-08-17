@@ -12,22 +12,26 @@ type job func() // тип функция
 func worker(id int, jobs <-chan job, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for fn := range jobs {
-		//fmt.Println("worker", id, "started  job")
+		//fmt.Println("worker", id, "started de job")
 		fn()
-		//fmt.Println("worker", id, "finished job")
+		//fmt.Println("worker", id, "finished da job")
 	}
+	//fmt.Println("Done - worker", id )
 }
 
 func main() {
+	var wg sync.WaitGroup
 	current := time.Now()
-	dosome()
+	wg.Add(1)
+	go ratelimiter(&wg)
+	wg.Wait()
 	fmt.Println("Total time: ", time.Since(current))
 }
 
 //func ratelimiter(ch chan job, totalWorker int, ratePerM int) {
 
-func dosome() {
-	var wg sync.WaitGroup
+func ratelimiter(wg *sync.WaitGroup) {
+	defer wg.Done()
 	const numJobs = 5
 	jobs := make(chan job, numJobs)
 	//results := make(chan struct{}, numJobs)
@@ -52,12 +56,11 @@ func dosome() {
 
 	for w := 1; w <= 5; w++ {
 		wg.Add(1)
-		go worker(w, jobs, &wg)
+		go worker(w, jobs, wg)
 	}
 
 	for i := 0; i < 10; i++ {
 		jobs <- sliceJobs[rand.Intn(3)]
 	}
 	close(jobs)
-	wg.Wait()
 }
