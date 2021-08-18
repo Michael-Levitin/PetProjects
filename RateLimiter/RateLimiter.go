@@ -1,114 +1,45 @@
-// package ratelimiter
-package main
+package ratelimiter
 
 import (
 	"fmt"
-	"math/rand"
+	"sync"
+	"sync/atomic"
 	"time"
 )
 
 type job func() // тип функция
 
-// WorkerPool is a contract for Worker Pool implementation
-type WorkerPool interface {
-	Run()
-	AddTask(task func())
-}
-
-type workerPool struct {
-	maxWorker   int
-	queuedTaskC chan job
-}
-
-func main() {
-	var sleep time.Duration
-	ch := make(chan job)             // создаем канал функций
-	wait := make(chan time.Duration) // и канал времени
-	done := make(chan bool)
-
-	sliceJobs := make([]job, 3)
-
-	// Creating in for loop doesnt work
-	//greetings:= []string{"Hello", "World", "And", "Welcome", "To", "Golang"}
-	//fmt.Println(greetings)
-	//sliceJobs := make([]job, len(greetings))
-	//for i:=0; i<len(greetings)-1;i++{
-	//	sliceJobs[i] = func() { // Создаем функции
-	//		current := time.Now()
-	//		time.Sleep(time.Duration(rand.Intn(2e2)) * time.Millisecond)
-	//		fmt.Println(greetings[i], time.Since(current))
-	//	}
-	//}
-	//for i:=0; i<len(greetings)-1;i++{
-	//	sliceJobs[i]()
-	//}
-
-	sliceJobs[0] = func() { // одну переменный типа job
-		current := time.Now()
-		time.Sleep(time.Duration(rand.Intn(1e2)) * time.Millisecond)
-		fmt.Println("Hello", time.Since(current))
-	}
-	sliceJobs[1] = func() { // вторую
-		current := time.Now()
-		time.Sleep(time.Duration(rand.Intn(2e2)) * time.Millisecond)
-		fmt.Println("Golang", time.Since(current))
-	}
-	sliceJobs[2] = func() { // и еще одну
-		current := time.Now()
-		time.Sleep(time.Duration(rand.Intn(3e2)) * time.Millisecond)
-		fmt.Println("World", time.Since(current))
-	}
-
-	ratelimiter(ch, wait, done, 5, 200) //запускаем функцию которая принимает 2 канала
-
-	current := time.Now()
-	rand.Seed(time.Now().UnixNano() + rand.Int63())
-	for i := 0; i < 10; i++ {
-		select {
-		case sleep = <-wait:
-			fmt.Println("Sleeping for ", sleep)
-			time.Sleep(sleep)
-		case ch <- sliceJobs[rand.Intn(3)]:
+func worker(id int, jobs <-chan job, wg *sync.WaitGroup, cPS *uint64, rPS uint64) {
+	defer wg.Done()
+	for fn := range jobs {
+		for atomic.LoadUint64(cPS) > rPS {
+			fmt.Println("Sleeping")
+			time.Sleep(time.Millisecond * 20)
 		}
+		atomic.AddUint64(cPS, 1)
+		//fmt.Println("worker", id, "started de job")
+		fn()
+		//fmt.Println("worker", id, "finished da job")
 	}
-	done <- true
-	fmt.Println("\nRun:", time.Since(current))
+	//fmt.Println("Done - worker", id )
 }
 
-func ratelimiter(ch chan job, wait chan time.Duration, done chan bool, totalWorker int, ratePerM int) {
-	var fn job
-	var quit bool
-	//waitC := make(chan bool)
-	//sleep := time.Second
-
-	// Start Worker Pool.
-	wp := workerPool{totalWorker, ch}
-	wp.Run()
+func RateLimiter(jobs chan job, totalWorkers int, rPM uint64, wg *sync.WaitGroup) {
+	// rate received as rPM (rate per minute), but calculations actually in
+	// rPS = rPM/60 for smoother operation
+	defer wg.Done()
+	var cpS uint64 // counterPerS
 
 	go func() {
 		for {
-			select {
-			case fn = <-ch:
-				wp.AddTask(fn)
-			case quit = <-done:
-				_ = quit
-				return
-			}
+			time.Sleep(time.Second)
+			fmt.Println(cpS)
+			atomic.CompareAndSwapUint64(&cpS, cpS, 0)
 		}
-	}()
-	//<-waitC
-}
+	}() // resetting the counter
 
-func (wp *workerPool) Run() {
-	for i := 0; i < wp.maxWorker; i++ {
-		go func(workerID int) {
-			for task := range wp.queuedTaskC {
-				task()
-			}
-		}(i + 1)
+	for w := 1; w <= totalWorkers; w++ {
+		wg.Add(1)
+		go worker(w, jobs, wg, &cpS, rPM/60)
 	}
-}
-
-func (wp *workerPool) AddTask(task func()) {
-	wp.queuedTaskC <- task
 }
