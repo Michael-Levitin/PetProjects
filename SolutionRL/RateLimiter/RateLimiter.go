@@ -1,19 +1,18 @@
 package ratelimiter
 
 import (
-	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
-type job func() // тип функция
+type Job func() // тип функция
 
-func worker(id int, jobs <-chan job, wg *sync.WaitGroup, cPS *uint64, rPS uint64) {
+func worker(id int, jobs <-chan Job, wg *sync.WaitGroup, cPS *uint64, rPS uint64) {
 	defer wg.Done()
 	for fn := range jobs {
 		for atomic.LoadUint64(cPS) > rPS {
-			fmt.Println("Sleeping")
+			//fmt.Println("Sleeping")
 			time.Sleep(time.Millisecond * 20)
 		}
 		atomic.AddUint64(cPS, 1)
@@ -24,7 +23,7 @@ func worker(id int, jobs <-chan job, wg *sync.WaitGroup, cPS *uint64, rPS uint64
 	//fmt.Println("Done - worker", id )
 }
 
-func RateLimiter(jobs chan job, totalWorkers int, rPM uint64, wg *sync.WaitGroup) {
+func RateLimiter(jobs chan Job, totalWorkers int, rPM uint64, wg *sync.WaitGroup) {
 	// rate received as rPM (rate per minute), but calculations actually in
 	// rPS = rPM/60 for smoother operation
 	defer wg.Done()
@@ -33,7 +32,7 @@ func RateLimiter(jobs chan job, totalWorkers int, rPM uint64, wg *sync.WaitGroup
 	go func() {
 		for {
 			time.Sleep(time.Second)
-			fmt.Println(cpS)
+			//fmt.Println(cpS)
 			atomic.CompareAndSwapUint64(&cpS, cpS, 0)
 		}
 	}() // resetting the counter
