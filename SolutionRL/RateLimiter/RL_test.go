@@ -9,7 +9,7 @@ import (
 
 func TestSingleW(t *testing.T) {
 	// One worker 3 functions, 1 sec each
-	finished := time.Millisecond * 3001 // 1msec spare
+	finished := time.Millisecond * 3005 // 5 msec spare
 	var wg sync.WaitGroup
 	jobs := make(chan RL.Job, 4)
 
@@ -34,7 +34,7 @@ func TestSingleW(t *testing.T) {
 
 func TestWorkersEqFunc(t *testing.T) {
 	// Same number of workers and functions
-	finished := time.Millisecond * 1001 // 1msec spare
+	finished := time.Millisecond * 1005 // 5 msec spare
 	var wg sync.WaitGroup
 	jobs := make(chan RL.Job, 4)
 
@@ -59,7 +59,7 @@ func TestWorkersEqFunc(t *testing.T) {
 
 func TestWPool10W20F(t *testing.T) {
 	// 10 workers and 20 functions
-	finished := time.Millisecond * 2001 // 1msec spare
+	finished := time.Millisecond * 2005 // 5 msec spare
 	var wg sync.WaitGroup
 	jobs := make(chan RL.Job, 4)
 
