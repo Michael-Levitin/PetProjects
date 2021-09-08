@@ -17,7 +17,10 @@ type ListNode struct {
 func main() {
 	numberA := randLinkedNumber(10)
 	printLinkedNumber(numberA)
-	printLinkedNumber(reverseLinkedNumber(numberA))
+	numberB := reverseLinkedNumber(numberA)
+	printLinkedNumber(numberB)
+	numberC := reverseLinkedNumber(numberB)
+	printLinkedNumber(numberC)
 }
 
 func randLinkedNumber(n int) *ListNode {
