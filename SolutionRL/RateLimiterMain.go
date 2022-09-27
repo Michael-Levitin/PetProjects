@@ -1,10 +1,9 @@
 package main
 
 import (
-	RL "RateLimiter"
-	// D:\go\src\RateLimiter> go install
 	"fmt"
 	"math/rand"
+	RL "petProjects/SolutionRL/RateLimiter"
 	"sync"
 	"time"
 )
