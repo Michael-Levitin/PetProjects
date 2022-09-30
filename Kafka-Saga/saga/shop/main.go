@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"golang.org/x/net/context"
+	"kafka-saga/saga/shop/handlers"
 	"log"
 	"math/rand"
 	"time"
@@ -12,12 +13,18 @@ import (
 	"kafka-saga/saga/consts"
 )
 
-func NewShop(ctx context.Context) error {
+type Store struct {
+	producer      sarama.SyncProducer
+	resetConsumer *handlers.ResetHandler
+}
+
+func NewShop(ctx context.Context) (*Store, error) {
 	cfg := sarama.NewConfig()
 	cfg.Producer.Return.Successes = true
 	syncProducer, err := sarama.NewSyncProducer(consts.Brokers, cfg)
 	if err != nil {
 		log.Fatalf("sync kafka: %v", err)
+		return nil, err
 	}
 
 	go func() {
@@ -31,34 +38,60 @@ func NewShop(ctx context.Context) error {
 				log.Printf("marshal unsuccessful %v", err)
 				continue
 			}
-			par, off, err := syncProducer.SendMessage(&sarama.ProducerMessage{
+			//par, off, err := syncProducer.SendMessage(&sarama.ProducerMessage{
+			_, _, err = syncProducer.SendMessage(&sarama.ProducerMessage{
 				Topic: "reserve_orders",
 				Key:   sarama.StringEncoder(fmt.Sprintf("%v", d.Id)),
 				Value: sarama.ByteEncoder(b),
 			})
-			log.Printf("order %v -> %v; %v", par, off, err)
+			//log.Printf("order %v -> %v; %v", par, off, err)
+			log.Printf("order %v sent; error: %v", d.Id, err)
 
 			time.Sleep(time.Millisecond * 500)
 
 			if rand.Intn(10) == 9 {
-				par, off, err = syncProducer.SendMessage(&sarama.ProducerMessage{
-					Topic: "order_reset",
+				_, _, err = syncProducer.SendMessage(&sarama.ProducerMessage{
+					Topic: "shop_order_reset",
 					Key:   sarama.StringEncoder(fmt.Sprintf("%v", d.Id)),
 					Value: sarama.ByteEncoder(b),
 				})
-				log.Printf("reset %v -> %v; %v", par, off, err)
+				//log.Printf("reset %v -> %v; %v", par, off, err)
+				log.Printf("shop resets order %v; error: %v", d.Id, err)
 			}
 		}
 	}()
 
-	return nil
+	// recieving resets from stock
+	reset, err := sarama.NewConsumerGroup(consts.Brokers, "shopReset", cfg)
+	if err != nil {
+		return nil, err
+	}
+	rHandler := &handlers.ResetHandler{
+		P: syncProducer,
+	}
+
+	go func() {
+		for {
+			err := reset.Consume(ctx, []string{"stock_order_reset"}, rHandler)
+			log.Printf("order reset")
+			if err != nil {
+				log.Printf("reset consumer error: %v", err)
+				time.Sleep(time.Second * 5)
+			}
+		}
+	}()
+
+	return &Store{
+		producer:      syncProducer,
+		resetConsumer: rHandler,
+	}, nil
 }
 
 func main() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	err := NewShop(ctx)
+	_, err := NewShop(ctx)
 	if err != nil {
 		log.Fatalf("NewStock: %v", err)
 	}

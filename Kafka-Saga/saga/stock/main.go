@@ -18,46 +18,47 @@ type Store struct {
 	resetConsumer  *handlers.ResetHandler
 }
 
-func NewStore(ctx context.Context) (*Store, error) {
+func NewStock(ctx context.Context) (*Store, error) {
 	Data := dto.NewMap()
 
 	cfg := sarama.NewConfig()
 	cfg.Producer.Return.Successes = true
-	producer, err := sarama.NewSyncProducer(consts.Brokers, cfg)
+	syncProducer, err := sarama.NewSyncProducer(consts.Brokers, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	income, err := sarama.NewConsumerGroup(consts.Brokers, "store", cfg)
+	reserve, err := sarama.NewConsumerGroup(consts.Brokers, "store", cfg)
 	if err != nil {
 		return nil, err
 	}
 	iHandler := &handlers.IncomeHandler{
-		P:    producer,
+		P:    syncProducer,
 		Data: Data,
 	}
 	go func() {
 		for {
-			err := income.Consume(ctx, []string{"income_orders"}, iHandler)
+			err := reserve.Consume(ctx, []string{"reserve_orders"}, iHandler)
 			if err != nil {
-				log.Printf("income consumer error: %v", err)
+				log.Printf("reserve consumer error: %v", err)
 				time.Sleep(time.Second * 5)
 			}
-			log.Printf("income consumer done")
+			log.Printf("reserve consumer done")
+
 		}
 	}()
 
-	reset, err := sarama.NewConsumerGroup(consts.Brokers, "storeReset", cfg)
+	reset, err := sarama.NewConsumerGroup(consts.Brokers, "stockReset", cfg)
 	if err != nil {
 		return nil, err
 	}
 	rHandler := &handlers.ResetHandler{
-		P:    producer,
+		P:    syncProducer,
 		Data: Data,
 	}
 	go func() {
 		for {
-			err := reset.Consume(ctx, []string{"reset_orders"}, rHandler)
+			err := reset.Consume(ctx, []string{"shop_order_reset"}, rHandler)
 			log.Printf("order reset")
 			if err != nil {
 				log.Printf("reset consumer error: %v", err)
@@ -67,7 +68,7 @@ func NewStore(ctx context.Context) (*Store, error) {
 	}()
 	return &Store{
 		data:           dto.NewMap(),
-		producer:       producer,
+		producer:       syncProducer,
 		incomeConsumer: iHandler,
 		resetConsumer:  rHandler,
 	}, nil
@@ -77,9 +78,9 @@ func main() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	_, err := NewStore(ctx)
+	_, err := NewStock(ctx)
 	if err != nil {
-		log.Fatalf("NewStore: %v", err)
+		log.Fatalf("NewStock: %v", err)
 	}
 	<-ctx.Done()
 }

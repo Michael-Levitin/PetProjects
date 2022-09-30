@@ -4,13 +4,11 @@ import (
 	"encoding/json"
 	"github.com/Shopify/sarama"
 	"kafka-saga/saga/consts"
-	"kafka-saga/saga/stock/dto"
 	"log"
 )
 
 type ResetHandler struct {
-	P    sarama.SyncProducer
-	Data *dto.Map
+	P sarama.SyncProducer
 }
 
 func (r *ResetHandler) Setup(sarama.ConsumerGroupSession) error {
@@ -29,11 +27,7 @@ func (r *ResetHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim s
 			log.Print("reset data %v: %v", string(msg.Value), err)
 			continue
 		}
-		if err := r.Data.Delete(d.Id); err != nil {
-			log.Printf("bad order: %v", d.Id)
-			continue
-		}
-		log.Printf("stock recieved request to reset order %v", d.Id)
+		log.Printf("Stock repors - order %v deleted", d.Id)
 	}
 	return nil
 }

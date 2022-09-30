@@ -33,17 +33,18 @@ func (i *IncomeHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim 
 		}
 		if rand.Intn(5) == 4 {
 			_, _, err := i.P.SendMessage(&sarama.ProducerMessage{
-				Topic: "reset_orders",
+				Topic: "stock_order_reset",
 				Key:   sarama.StringEncoder(fmt.Sprintf("%v", d.Id)),
 				Value: sarama.ByteEncoder(msg.Value),
 			})
 			if err != nil {
 				log.Printf("Cant send reset: %v", err)
 			}
+			log.Printf("stock resets order %v", d.Id)
 			continue
 		}
 		i.Data.Set(d.Id, d.Data)
-		log.Printf("Order %v reserved", d.Id)
+		log.Printf("оrder %v reserved", d.Id)
 	}
 	return nil
 }
