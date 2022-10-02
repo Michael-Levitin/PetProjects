@@ -13,12 +13,12 @@ import (
 	"kafka-saga/saga/consts"
 )
 
-type Store struct {
+type Shop struct {
 	producer      sarama.SyncProducer
 	resetConsumer *handlers.ResetHandler
 }
 
-func NewShop(ctx context.Context) (*Store, error) {
+func NewShop(ctx context.Context) (*Shop, error) {
 	cfg := sarama.NewConfig()
 	cfg.Producer.Return.Successes = true
 	syncProducer, err := sarama.NewSyncProducer(consts.Brokers, cfg)
@@ -101,7 +101,7 @@ func NewShop(ctx context.Context) (*Store, error) {
 		}
 	}()
 
-	return &Store{
+	return &Shop{
 		producer:      syncProducer,
 		resetConsumer: rHandler,
 	}, nil

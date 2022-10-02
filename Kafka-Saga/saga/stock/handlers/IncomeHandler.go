@@ -52,7 +52,7 @@ func (i *IncomeHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim 
 			Value: sarama.ByteEncoder(msg.Value),
 		})
 		if err != nil {
-			log.Printf("Cant send reserve confiramtio %v", err)
+			log.Printf("cannot send reserve confiramtion %v", err)
 		}
 	}
 	return nil
