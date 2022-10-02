@@ -45,6 +45,15 @@ func (i *IncomeHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim 
 		}
 		i.Data.Set(d.Id, d.Data)
 		log.Printf("оrder %v reserved", d.Id)
+
+		_, _, err = i.P.SendMessage(&sarama.ProducerMessage{
+			Topic: "order_reserved",
+			Key:   sarama.StringEncoder(fmt.Sprintf("%v", d.Id)),
+			Value: sarama.ByteEncoder(msg.Value),
+		})
+		if err != nil {
+			log.Printf("Cant send reserve confiramtio %v", err)
+		}
 	}
 	return nil
 }

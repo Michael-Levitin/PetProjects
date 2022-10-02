@@ -40,7 +40,7 @@ func NewShop(ctx context.Context) (*Store, error) {
 			}
 			//par, off, err := syncProducer.SendMessage(&sarama.ProducerMessage{
 			_, _, err = syncProducer.SendMessage(&sarama.ProducerMessage{
-				Topic: "reserve_orders",
+				Topic: "order_send",
 				Key:   sarama.StringEncoder(fmt.Sprintf("%v", d.Id)),
 				Value: sarama.ByteEncoder(b),
 			})
@@ -76,6 +76,26 @@ func NewShop(ctx context.Context) (*Store, error) {
 			log.Printf("order reset")
 			if err != nil {
 				log.Printf("reset consumer error: %v", err)
+				time.Sleep(time.Second * 5)
+			}
+		}
+	}()
+
+	// recieving reserves from stock
+	reserve, err := sarama.NewConsumerGroup(consts.Brokers, "shopReserve", cfg)
+	if err != nil {
+		return nil, err
+	}
+	rsHandler := &handlers.ReserveHandler{
+		P: syncProducer,
+	}
+
+	go func() {
+		for {
+			err := reserve.Consume(ctx, []string{"order_reserved"}, rsHandler)
+			log.Printf("order reserved")
+			if err != nil {
+				log.Printf("reserve order error: %v", err)
 				time.Sleep(time.Second * 5)
 			}
 		}

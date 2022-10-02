@@ -38,7 +38,7 @@ func NewStock(ctx context.Context) (*Store, error) {
 	}
 	go func() {
 		for {
-			err := reserve.Consume(ctx, []string{"reserve_orders"}, iHandler)
+			err := reserve.Consume(ctx, []string{"order_send"}, iHandler)
 			if err != nil {
 				log.Printf("reserve consumer error: %v", err)
 				time.Sleep(time.Second * 5)
@@ -61,7 +61,7 @@ func NewStock(ctx context.Context) (*Store, error) {
 			err := reset.Consume(ctx, []string{"shop_order_reset"}, rHandler)
 			log.Printf("order reset")
 			if err != nil {
-				log.Printf("reset consumer error: %v", err)
+				log.Printf("reset order error: %v", err)
 				time.Sleep(time.Second * 5)
 			}
 		}

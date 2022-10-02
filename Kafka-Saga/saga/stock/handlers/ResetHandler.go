@@ -30,7 +30,7 @@ func (r *ResetHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim s
 			continue
 		}
 		if err := r.Data.Delete(d.Id); err != nil {
-			log.Printf("bad order: %v", d.Id)
+			log.Printf("bad order: %v, %s", d.Id, err)
 			continue
 		}
 		log.Printf("stock recieved request to reset order %v", d.Id)
