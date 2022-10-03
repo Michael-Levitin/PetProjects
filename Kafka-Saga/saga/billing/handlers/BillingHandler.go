@@ -31,7 +31,7 @@ func (b *BillingHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim
 		}
 		log.Printf("billing reports - recieved payment for order %v: %v", d.Id, err)
 
-		if rand.Intn(10) == 1 {
+		if rand.Intn(5) == 4 {
 			_, _, err := b.P.SendMessage(&sarama.ProducerMessage{
 				Topic: "billing_order_reset_shop",
 				Key:   sarama.StringEncoder(fmt.Sprintf("%v", d.Id)),

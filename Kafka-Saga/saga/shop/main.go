@@ -14,9 +14,10 @@ import (
 )
 
 type Shop struct {
-	producer        sarama.SyncProducer
-	resetConsumer   *handlers.ResetHandler
-	reserveConsumer *handlers.ReserveHandler
+	producer          sarama.SyncProducer
+	resetConsumer     *handlers.ResetHandler
+	reserveConsumer   *handlers.ReserveHandler
+	resetBillConsumer *handlers.ResetBillHandler
 }
 
 func NewShop(ctx context.Context) (*Shop, error) {
@@ -83,6 +84,25 @@ func NewShop(ctx context.Context) (*Shop, error) {
 		}
 	}()
 
+	// receiving resets from billing
+	resetB, err := sarama.NewConsumerGroup(consts.Brokers, "billReset", cfg)
+	if err != nil {
+		return nil, err
+	}
+	rbHandler := &handlers.ResetBillHandler{
+		P: syncProducer,
+	}
+	go func() {
+		for {
+			err := resetB.Consume(ctx, []string{"billing_order_reset_shop"}, rbHandler)
+			log.Printf("billing order reset")
+			if err != nil {
+				log.Printf("reset consumer error: %v", err)
+				time.Sleep(time.Second * 5)
+			}
+		}
+	}()
+
 	// receiving reserves from stock
 	reserve, err := sarama.NewConsumerGroup(consts.Brokers, "shopReserve", cfg)
 	if err != nil {
@@ -103,9 +123,10 @@ func NewShop(ctx context.Context) (*Shop, error) {
 	}()
 
 	return &Shop{
-		producer:        syncProducer,
-		resetConsumer:   rHandler,
-		reserveConsumer: rsHandler,
+		producer:          syncProducer,
+		resetConsumer:     rHandler,
+		reserveConsumer:   rsHandler,
+		resetBillConsumer: rbHandler,
 	}, nil
 }
 
