@@ -14,13 +14,16 @@ import (
 )
 
 type Shop struct {
-	producer      sarama.SyncProducer
-	resetConsumer *handlers.ResetHandler
+	producer        sarama.SyncProducer
+	resetConsumer   *handlers.ResetHandler
+	reserveConsumer *handlers.ReserveHandler
 }
 
 func NewShop(ctx context.Context) (*Shop, error) {
 	cfg := sarama.NewConfig()
 	cfg.Producer.Return.Successes = true
+
+	// sending order
 	syncProducer, err := sarama.NewSyncProducer(consts.Brokers, cfg)
 	if err != nil {
 		log.Fatalf("sync kafka: %v", err)
@@ -61,7 +64,7 @@ func NewShop(ctx context.Context) (*Shop, error) {
 		}
 	}()
 
-	// recieving resets from stock
+	// receiving resets from stock
 	reset, err := sarama.NewConsumerGroup(consts.Brokers, "shopReset", cfg)
 	if err != nil {
 		return nil, err
@@ -69,7 +72,6 @@ func NewShop(ctx context.Context) (*Shop, error) {
 	rHandler := &handlers.ResetHandler{
 		P: syncProducer,
 	}
-
 	go func() {
 		for {
 			err := reset.Consume(ctx, []string{"stock_order_reset"}, rHandler)
@@ -81,7 +83,7 @@ func NewShop(ctx context.Context) (*Shop, error) {
 		}
 	}()
 
-	// recieving reserves from stock
+	// receiving reserves from stock
 	reserve, err := sarama.NewConsumerGroup(consts.Brokers, "shopReserve", cfg)
 	if err != nil {
 		return nil, err
@@ -89,7 +91,6 @@ func NewShop(ctx context.Context) (*Shop, error) {
 	rsHandler := &handlers.ReserveHandler{
 		P: syncProducer,
 	}
-
 	go func() {
 		for {
 			err := reserve.Consume(ctx, []string{"order_reserved"}, rsHandler)
@@ -102,8 +103,9 @@ func NewShop(ctx context.Context) (*Shop, error) {
 	}()
 
 	return &Shop{
-		producer:      syncProducer,
-		resetConsumer: rHandler,
+		producer:        syncProducer,
+		resetConsumer:   rHandler,
+		reserveConsumer: rsHandler,
 	}, nil
 }
 
