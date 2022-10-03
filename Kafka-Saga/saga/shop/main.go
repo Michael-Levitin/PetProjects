@@ -14,10 +14,11 @@ import (
 )
 
 type Shop struct {
-	producer          sarama.SyncProducer
-	resetConsumer     *handlers.ResetHandler
-	reserveConsumer   *handlers.ReserveHandler
-	resetBillConsumer *handlers.ResetBillHandler
+	producer            sarama.SyncProducer
+	resetConsumer       *handlers.ResetHandler
+	reserveConsumer     *handlers.ReserveHandler
+	resetBillConsumer   *handlers.ResetBillHandler
+	confirmBillConsumer *handlers.BillConfirmHandler
 }
 
 func NewShop(ctx context.Context) (*Shop, error) {
@@ -30,7 +31,6 @@ func NewShop(ctx context.Context) (*Shop, error) {
 		log.Fatalf("sync kafka: %v", err)
 		return nil, err
 	}
-
 	go func() {
 		for {
 			d := consts.Order{
@@ -122,11 +122,31 @@ func NewShop(ctx context.Context) (*Shop, error) {
 		}
 	}()
 
+	// receiving confirmation from billing
+	confirm, err := sarama.NewConsumerGroup(consts.Brokers, "billConfirmed", cfg)
+	if err != nil {
+		return nil, err
+	}
+	bcHandler := &handlers.BillConfirmHandler{
+		P: syncProducer,
+	}
+	go func() {
+		for {
+			err := confirm.Consume(ctx, []string{"bill_confirmed_shop"}, bcHandler)
+			log.Printf("bill confirmed")
+			if err != nil {
+				log.Printf("bill confirm consume error: %v", err)
+				time.Sleep(time.Second * 5)
+			}
+		}
+	}()
+
 	return &Shop{
-		producer:          syncProducer,
-		resetConsumer:     rHandler,
-		reserveConsumer:   rsHandler,
-		resetBillConsumer: rbHandler,
+		producer:            syncProducer,
+		resetConsumer:       rHandler,
+		reserveConsumer:     rsHandler,
+		resetBillConsumer:   rbHandler,
+		confirmBillConsumer: bcHandler,
 	}, nil
 }
 
