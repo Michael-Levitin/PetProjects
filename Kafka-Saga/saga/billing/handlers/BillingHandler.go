@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/Shopify/sarama"
 	"kafka-saga/saga/consts"
 	"log"
@@ -28,6 +29,15 @@ func (b *BillingHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim
 			continue
 		}
 		log.Printf("billing reports - recieved payment for order %v: %v", d.Id, err)
+
+		_, _, err = b.P.SendMessage(&sarama.ProducerMessage{
+			Topic: "bill_confirmed",
+			Key:   sarama.StringEncoder(fmt.Sprintf("%v", d.Id)),
+			Value: sarama.ByteEncoder(msg.Value),
+		})
+		if err != nil {
+			log.Printf("cannot send bill confiramtion %v", err)
+		}
 	}
 	return nil
 }
