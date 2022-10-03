@@ -33,19 +33,38 @@ func (b *BillingHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim
 
 		if rand.Intn(10) == 1 {
 			_, _, err := b.P.SendMessage(&sarama.ProducerMessage{
-				Topic: "billing_order_reset",
+				Topic: "billing_order_reset_shop",
 				Key:   sarama.StringEncoder(fmt.Sprintf("%v", d.Id)),
 				Value: sarama.ByteEncoder(msg.Value),
 			})
 			if err != nil {
 				log.Printf("Cant send reset: %v", err)
 			}
-			log.Printf("billing resets order %v", d.Id)
+			log.Printf("billing resets order %v for shop ", d.Id)
+
+			_, _, err = b.P.SendMessage(&sarama.ProducerMessage{
+				Topic: "billing_order_reset_stock",
+				Key:   sarama.StringEncoder(fmt.Sprintf("%v", d.Id)),
+				Value: sarama.ByteEncoder(msg.Value),
+			})
+			if err != nil {
+				log.Printf("Cant send reset: %v", err)
+			}
+			log.Printf("billing resets order %v for stock", d.Id)
 			continue
 		}
 
 		_, _, err = b.P.SendMessage(&sarama.ProducerMessage{
-			Topic: "bill_confirmed",
+			Topic: "bill_confirmed_shop",
+			Key:   sarama.StringEncoder(fmt.Sprintf("%v", d.Id)),
+			Value: sarama.ByteEncoder(msg.Value),
+		})
+		if err != nil {
+			log.Printf("cannot send bill confiramtion %v", err)
+		}
+
+		_, _, err = b.P.SendMessage(&sarama.ProducerMessage{
+			Topic: "bill_confirmed_stock",
 			Key:   sarama.StringEncoder(fmt.Sprintf("%v", d.Id)),
 			Value: sarama.ByteEncoder(msg.Value),
 		})
