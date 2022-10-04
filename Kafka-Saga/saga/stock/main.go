@@ -17,6 +17,7 @@ type Store struct {
 	incomeConsumer         *handlers.IncomeHandler
 	resetConsumer          *handlers.ResetHandler
 	resetBillStockConsumer *handlers.BillResetHandler
+	confirmBillStConsumer  *handlers.BillConfirmStockHandler
 }
 
 func NewStock(ctx context.Context) (*Store, error) {
@@ -49,6 +50,7 @@ func NewStock(ctx context.Context) (*Store, error) {
 		}
 	}()
 
+	// receiving resets from shop
 	reset, err := sarama.NewConsumerGroup(consts.Brokers, "stockReset", cfg)
 	if err != nil {
 		return nil, err
@@ -88,12 +90,32 @@ func NewStock(ctx context.Context) (*Store, error) {
 		}
 	}()
 
+	// receiving confirmation from billing
+	confirm, err := sarama.NewConsumerGroup(consts.Brokers, "billConfirmedStock", cfg)
+	if err != nil {
+		return nil, err
+	}
+	bcStHandler := &handlers.BillConfirmStockHandler{
+		P: syncProducer,
+	}
+	go func() {
+		for {
+			err := confirm.Consume(ctx, []string{"bill_confirmed_stock"}, bcStHandler)
+			log.Printf("bill confirmed")
+			if err != nil {
+				log.Printf("bill confirm consume error: %v", err)
+				time.Sleep(time.Second * 5)
+			}
+		}
+	}()
+
 	return &Store{
 		data:                   dto.NewMap(),
 		producer:               syncProducer,
 		incomeConsumer:         iHandler,
 		resetConsumer:          rHandler,
 		resetBillStockConsumer: rbStHandler,
+		confirmBillStConsumer:  bcStHandler,
 	}, nil
 }
 

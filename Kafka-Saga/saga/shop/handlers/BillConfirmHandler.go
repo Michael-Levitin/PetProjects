@@ -27,7 +27,7 @@ func (bc *BillConfirmHandler) ConsumeClaim(session sarama.ConsumerGroupSession, 
 			log.Print("reserve data %v: %v", string(msg.Value), err)
 			continue
 		}
-		log.Printf("billing reports - order %v payed: %v", d.Id, err)
+		log.Printf("billing reports to shop - order %v payed: %v", d.Id, err)
 	}
 	return nil
 }

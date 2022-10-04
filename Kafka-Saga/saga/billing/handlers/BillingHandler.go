@@ -33,7 +33,7 @@ func (b *BillingHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim
 
 		if rand.Intn(5) == 4 {
 			_, _, err := b.P.SendMessage(&sarama.ProducerMessage{
-				Topic: "billing_order_reset_shop",
+				Topic: "bill_reset_shop",
 				Key:   sarama.StringEncoder(fmt.Sprintf("%v", d.Id)),
 				Value: sarama.ByteEncoder(msg.Value),
 			})
@@ -43,7 +43,7 @@ func (b *BillingHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim
 			log.Printf("billing resets order %v for shop ", d.Id)
 
 			_, _, err = b.P.SendMessage(&sarama.ProducerMessage{
-				Topic: "billing_order_reset_stock",
+				Topic: "bill_reset_stock",
 				Key:   sarama.StringEncoder(fmt.Sprintf("%v", d.Id)),
 				Value: sarama.ByteEncoder(msg.Value),
 			})
