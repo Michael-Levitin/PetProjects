@@ -85,7 +85,7 @@ func NewShop(ctx context.Context) (*Shop, error) {
 	}()
 
 	// receiving resets from billing
-	resetB, err := sarama.NewConsumerGroup(consts.Brokers, "billReset", cfg)
+	resetB, err := sarama.NewConsumerGroup(consts.Brokers, "billResetShop", cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func NewShop(ctx context.Context) (*Shop, error) {
 	}
 	go func() {
 		for {
-			err := resetB.Consume(ctx, []string{"billing_order_reset_shop"}, rbHandler)
+			err := resetB.Consume(ctx, []string{"bill_reset_shop"}, rbHandler)
 			log.Printf("billing order reset")
 			if err != nil {
 				log.Printf("reset consumer error: %v", err)

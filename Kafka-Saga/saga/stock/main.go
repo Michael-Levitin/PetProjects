@@ -12,10 +12,11 @@ import (
 )
 
 type Store struct {
-	data           *dto.Map
-	producer       sarama.SyncProducer
-	incomeConsumer *handlers.IncomeHandler
-	resetConsumer  *handlers.ResetHandler
+	data                   *dto.Map
+	producer               sarama.SyncProducer
+	incomeConsumer         *handlers.IncomeHandler
+	resetConsumer          *handlers.ResetHandler
+	resetBillStockConsumer *handlers.BillResetHandler
 }
 
 func NewStock(ctx context.Context) (*Store, error) {
@@ -66,11 +67,33 @@ func NewStock(ctx context.Context) (*Store, error) {
 			}
 		}
 	}()
+
+	// receiving resets from billing
+	resetB, err := sarama.NewConsumerGroup(consts.Brokers, "billResetStock", cfg)
+	if err != nil {
+		return nil, err
+	}
+	rbStHandler := &handlers.BillResetHandler{
+		P:    syncProducer,
+		Data: Data,
+	}
+	go func() {
+		for {
+			err := resetB.Consume(ctx, []string{"bill_reset_stock"}, rbStHandler)
+			log.Printf("billing order reset")
+			if err != nil {
+				log.Printf("reset consumer error: %v", err)
+				time.Sleep(time.Second * 5)
+			}
+		}
+	}()
+
 	return &Store{
-		data:           dto.NewMap(),
-		producer:       syncProducer,
-		incomeConsumer: iHandler,
-		resetConsumer:  rHandler,
+		data:                   dto.NewMap(),
+		producer:               syncProducer,
+		incomeConsumer:         iHandler,
+		resetConsumer:          rHandler,
+		resetBillStockConsumer: rbStHandler,
 	}, nil
 }
 
