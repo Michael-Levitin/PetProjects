@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	RL "petProjects/SolutionRL/RateLimiter"
+	RL "petProjects/RateLimiter/RateLimiter"
 	"sync"
 	"time"
 )

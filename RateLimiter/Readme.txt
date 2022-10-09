@@ -1,0 +1,1 @@
+Limits the rate (rpm) and workers that concurrently handle stream of jobs (functions)
