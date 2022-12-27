@@ -1,5 +1,6 @@
-// I. Дерево комментариев (30/30 баллов) works, not checked, spare nl at the end,
-// tabsF are static - 100 levels deep
+// I. Дерево комментариев (30/30 баллов) works, not checked,
+//TODO spare nl at the end,
+//TODO tabsF are static - 100 levels deep
 package main
 
 import (
