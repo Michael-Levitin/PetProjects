@@ -11,18 +11,10 @@ func main() {
 }
 
 func lpf(num int) int {
-	div := 2
-	for {
-		if div*div > num {
-			break
-		}
-		for {
-			if num%div != 0 {
-				break
-			}
+	for div := 2; div*div <= num; div++ {
+		for num%div == 0 {
 			num /= div
 		}
-		div++
 	}
 	return num
 }
